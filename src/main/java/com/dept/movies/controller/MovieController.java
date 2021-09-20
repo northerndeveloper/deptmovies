@@ -1,11 +1,13 @@
 package com.dept.movies.controller;
 
 import com.dept.movies.constants.MovieConstants;
-import com.dept.movies.entity.Movie;
+import com.dept.movies.entity.Result;
+import com.dept.movies.entity.MovieRecords;
 import com.dept.movies.service.MovieService;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,28 +40,28 @@ public class MovieController {
 
 
     @GetMapping("/searchmoviesByTitle/{title}")
-    public ResponseEntity<List<Movie>> searchMoviesByTitle(@PathVariable("title") String title) {
+    public ResponseEntity<List<Result>> searchMoviesByTitle(@PathVariable("title") String title) {
 
-        List<Movie> movieList = searchmoviesByTitle(title); //TOO get it as parameter
+        List<Result> resultList = searchmoviesByTitle(title); //TOO get it as parameter
         String linkOfTheMovie;
 
-        if (movieList == null || movieList.size() == 0) {
+        if (resultList == null || resultList.size() == 0) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         //TODO not sure how to manage there maybe we return with found
 
         //TODO 3 aggregate metodunu daha mantıklı bi yerde güzl bir şekilde yaz çalıştır !!!
-        for (Movie movie : movieList) {
+        for (Result result : resultList) {
             //TODO burada yahoo API sin iarıycan ve neye gore arama yapıcagını bilmen lazım
             linkOfTheMovie = getMovieLinkByTitle(title);
             if (linkOfTheMovie != null) { //TODO null check find method or optional
-                movie.setMovieLink(linkOfTheMovie);
+                //movie.setMovieLink(linkOfTheMovie);  //TODO uncomment me late r on
             }
         }
 
 
-        return new ResponseEntity<>(movieList, HttpStatus.OK);
+        return new ResponseEntity<>(resultList, HttpStatus.OK);
     }
 
     public String getMovieLinkByTitle(String title) {
@@ -72,7 +74,7 @@ public class MovieController {
     }
 
 
-    public List<Movie> searchmoviesByTitle(String titleName) {
+    public List<Result> searchmoviesByTitle(String titleName) {
 
         HttpHeaders headers = new HttpHeaders();
 
@@ -81,44 +83,26 @@ public class MovieController {
         headers.add(MovieConstants.CONTENT_TYPE, MovieConstants.APPLICATION_JSON);
         headers.add(MovieConstants.AUTHORIZATION, MovieConstants.API_KEY);
 
-        // request body parameters
-        Map<String, String> map = new HashMap<>();
-        map.put("query", titleName);
-
         // build the request
-        HttpEntity<Map<String, String>> entity = new HttpEntity<>(map, headers);
+        HttpEntity httpEntity = new HttpEntity(headers);
 
         restTemplate.getMessageConverters().add(new StringHttpMessageConverter());
 
-        ResponseEntity<Object[]> res = restTemplate.exchange(MovieConstants.URI_IMDB_TITLE, HttpMethod.GET, entity, Object[].class);
+        ParameterizedTypeReference<MovieRecords> parametrizedMovieList =
+                new ParameterizedTypeReference<MovieRecords>() {
+                };
 
+        ResponseEntity<MovieRecords> response = restTemplate.exchange(MovieConstants.URI_IMDB_TITLE, HttpMethod.GET, httpEntity, parametrizedMovieList, titleName);
 
+        MovieRecords movieRecordsList = (MovieRecords) response.getBody();
+        List<Result> resultList = movieRecordsList.getResultList();
+        for (Result result : resultList) {
+            //TODO call other service from there !!
+            System.out.println(result.getTitle());
+        }
 
-
-        // List<Movie> listOfString = responseEntity.getBody();
-
-        Gson gson = new Gson(); //instancie o obj Gson
-        Object[] jsonInString = res.getBody(); //se não for uma String, o que acho difícil, converta
-
-//        ResponseEntity<Object> response = restTemplate.exchange(MovieConstants.URI_IMDB_TITLE, HttpMethod.GET,entity,Object.classparams);
-
-        //TODO there is no way to return it with list
-        //   ResponseEntity<Movie[]> responseEntity = restTemplate
-        //         .exchange(MovieConstants.URI_IMDB_TITLE, HttpMethod.GET, entity, Movie[].class, params);
-
-        //TODO return as a list
-
-        //TODO first buradan liste gelmesini yap !!!!
-  //      ResponseEntity<Movie> responseEntity = restTemplate
-    //            .getForEntity(MovieConstants.URI_IMDB_TITLE, Movie.class, entity, params);
-
-  //      System.out.println(response);
-    //    List<Movie> movies = (List<Movie>) response;
-        List<Movie> listOfString = null;
+        List<Result> listOfString = null;
         return listOfString;
-
-
     }
-
 
 }

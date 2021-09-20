@@ -1,10 +1,12 @@
 package com.dept.movies.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+@JsonIgnoreProperties( ignoreUnknown = true )
 @Data
-public class Movie {
+public class Result {
 
     @JsonProperty("Title")
     private String title;
@@ -21,5 +23,4 @@ public class Movie {
     @JsonProperty("Poster")
     private String poster;
 
-    private String movieLink;
 }

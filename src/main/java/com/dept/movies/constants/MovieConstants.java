@@ -10,7 +10,7 @@ public final class MovieConstants {
 
     public static final String CONTENT_TYPE = "content-type";
 
-    public static final String URI_IMDB_TITLE = "https://api.collectapi.com/imdb/imdbSearchByName/query={query}";
+    public static final String URI_IMDB_TITLE = "https://api.collectapi.com/imdb/imdbSearchByName?query={query}";
 
 
 
